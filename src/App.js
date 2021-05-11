@@ -1,25 +1,71 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from 'react';
+import Login from './Login';
+import Home from './Home';
+import { firebase } from "./utils/Firebase-config";
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link
+} from "react-router-dom";
+import axios from "./utils/Axios";
+
+
+let UserContext = React.createContext();
+
 
 function App() {
+
+  let [user, setUser] = useState();
+
+  //to check state of authentication...this function triggers whenever u login or out
+  useEffect(function () {
+    firebase.auth().onAuthStateChanged((user) => {
+      console.log(user);
+      setUser(user);
+
+      // to get the token id of user
+      if (user)
+      {
+        user.getIdToken(true)
+          .then(function (idToken) {
+            // to set axios header as users token id
+            axios.defaults.headers["Authorization"] = `Bearer ${idToken}`
+            console.log( axios.defaults.headers["Authorization"]);
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
+      } else {
+      }
+
+    });
+
+
+
+  }, []);
+
+
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+
+    <UserContext.Provider value={{ user, setUser }}>
+      <div>
+        <Switch>
+
+          <Route path="/login" exact>
+            <Login />
+          </Route>
+
+          <Route path="/" exact>
+            <Home />
+          </Route>
+
+        </Switch>
+      </div>
+    </UserContext.Provider>
+
   );
 }
 
-export default App;
+export { App, UserContext };
